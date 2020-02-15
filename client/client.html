@@ -6,6 +6,110 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
+    const parseJSON = (xhr, content) => {
+      const obj = JSON.parse(xhr.response);
+
+      if(xhr.response) {
+        if(obj.message) {
+        let message = document.createElement('p');
+        message.textContent = `Message: ${obj.message}`;
+        content.appendChild(message);
+        }
+
+        if(obj.users){
+        let users = document.createElement('p');
+        users.textContent = JSON.stringify(obj.users);
+        content.appendChild(users);
+        }
+      }
+    };
+
+    const handleResponse = (xhr, parse) => {
+      const content = document.querySelector('#content');
+
+      switch(xhr.status){
+        case 200:
+          content.innerHTML = '<b>Success</b>';
+          break;
+        case 201:
+          content.innerHTML = '<b>Created</b>';
+          break;
+        case 204:
+          content.innerHTML = '<b>Updated (No Content)</b>';
+          break;
+        case 400:
+          content.innerHTML = '<b>Bad Request</b>';
+          break;
+        case 404:
+          content.innerHTML = '<b>Resource Not Found</b>';
+          break;
+        default:
+          content.innerHTML = '<b>Status Code Not Implemented By Client</b>';
+          break;
+      }
+
+      parseJSON(xhr, content);
+    };
+
+    const sendPost = (e, nameForm) => {
+      const nameAction = nameForm.getAttribute('action');
+      const nameMethod = nameForm.getAttribute('method');
+    
+      const nameField = nameForm.querySelector('#nameField');
+      const ageField = nameForm.querySelector('#ageField');
+    
+      const xhr = new XMLHttpRequest();
+      xhr.open(nameMethod, nameAction);
+
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+      xhr.onload = () => handleResponse(xhr, true);
+
+      const formData = `name=${nameField.value}&age=${ageField.value}`;
+
+      xhr.send(formData);
+
+      e.preventDefault();
+
+      return false;
+    };
+
+    const sendGet = (e, userForm) => {
+      const url = userForm.querySelector('#urlField');
+      const method = userForm.querySelector('#methodSelect');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open(method.value, url.value);
+
+      // if(method.value === 'get'){
+      //   xhr.onload = () => handleResponse(xhr, true);
+      // } else if(mathod.value === 'head'){
+      //   xhr.onload = () => handleResponse(xhr, false);
+      // }
+
+      xhr.onload = () => handleResponse(xhr);
+
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.send();
+
+      e.preventDefault();
+
+      return false;
+    }
+
+    const init = () => {
+      const nameForm = document.querySelector('#nameForm');
+      const userForm = document.querySelector('#userForm')
+      
+      const addUser = (e) => sendPost(e, nameForm);
+      nameForm.addEventListener('submit', addUser);
+
+      const getUser = (e) => sendGet(e, userForm);
+      userForm.addEventListener('submit', getUser);
+    };
+
+    window.onload = init;
 
   </script>
 </head>
@@ -28,7 +132,7 @@
         <option value="get">GET</option>
         <option value="head">HEAD</option>
       </select>
-      <input type="submit" value="Get User" />
+      <input type="submit" value="Send" />
     </form>
   </section>
   <section id="content">
